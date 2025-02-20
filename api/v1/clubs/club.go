@@ -24,7 +24,7 @@ func Add(ctx context.Context) func(*gin.Context) {
 			Name: request.Name,
 		})
 		if result == nil {
-			c.JSON(500, constants.CreateErrorMessage("something went wrong on our side, please retry later"))
+			c.JSON(500, constants.CreateErrorMessage(constants.InternalError))
 			return
 		}
 
@@ -96,5 +96,34 @@ func Update(ctx context.Context) func(*gin.Context) {
 		}, club.ClubUpdateFields{
 			Name: request.Name,
 		}))
+	}
+}
+
+func Remove(ctx context.Context) func(*gin.Context) {
+	return func(c *gin.Context) {
+		type clubUri struct {
+			Id int `uri:"id" binding:"required"`
+		}
+
+		var uri clubUri
+		if err := c.ShouldBindUri(&uri); err != nil {
+			c.JSON(400, constants.CreateErrorMessage(constants.WrongFormat))
+			return
+		}
+
+		result := club.Find(ctx, club.ClubPrimaryKey{
+			Id: uri.Id,
+		})
+		if result == nil {
+			c.JSON(404, constants.CreateErrorMessage("club not found"))
+			return
+		}
+
+		if err := club.Delete(ctx, club.ClubPrimaryKey{
+			Id: result.Id,
+		}); err != nil {
+			c.JSON(500, constants.CreateErrorMessage(constants.InternalError))
+		}
+		c.Status(200)
 	}
 }

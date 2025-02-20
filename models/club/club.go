@@ -42,15 +42,16 @@ func FindAll(ctx context.Context) []*Club {
 	clubs := make([]*Club, 0)
 	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
 
-	iter, err := driver.Query(ctx, fmt.Sprintf("SELECT id, name FROM %s", table))
+	rows, err := driver.Query(ctx, fmt.Sprintf("SELECT id, name FROM %s", table))
 	if err != nil {
 		fmt.Println("warn:", err.Error())
 		return clubs
 	}
+	defer rows.Close()
 
-	for iter.Next() {
+	for rows.Next() {
 		var club Club
-		if err := iter.Scan(&club.Id, &club.Name); err != nil {
+		if err := rows.Scan(&club.Id, &club.Name); err != nil {
 			fmt.Println("warn:", err.Error())
 			continue
 		}
@@ -84,4 +85,16 @@ func Update(ctx context.Context, pk ClubPrimaryKey, fields ClubUpdateFields) *Cl
 	}
 
 	return &club
+}
+
+func Delete(ctx context.Context, pk ClubPrimaryKey) error {
+	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
+
+	rows, err := driver.Query(ctx, fmt.Sprintf("DELETE FROM %s WHERE id = $1", table), pk.Id)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	return nil
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"noan.dev/uniklub/api/v1/clubs"
+	"noan.dev/uniklub/api/v1/users"
 	"noan.dev/uniklub/constants"
 	"noan.dev/uniklub/database"
 	"noan.dev/uniklub/middlewares"
@@ -23,6 +24,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	defer driver.Close(ctx)
+
 	ctx = context.WithValue(ctx, constants.DatabaseCtx, driver)
 
 	gin.SetMode(gin.DebugMode)
@@ -38,6 +42,11 @@ func main() {
 			clubsRouter.POST("/", clubs.Add(ctx))
 			clubsRouter.POST("/:id", clubs.Update(ctx))
 			clubsRouter.PUT("/:id", clubs.Update(ctx))
+			clubsRouter.DELETE("/:id", clubs.Remove(ctx))
+		}
+		usersRouter := v1Router.Group("/users")
+		{
+			usersRouter.POST("/", users.Create(ctx))
 		}
 	}
 
