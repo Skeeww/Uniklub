@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"net/mail"
 
@@ -24,19 +25,22 @@ func (creds *UserPasswordCrendentials) Check() (*user.User, error) {
 		return nil, fmt.Errorf(constants.WrongMailFormat)
 	}
 
-	user, err := user.Find(context.Background(), user.UserPrimaryKey{
+	u, err := user.Find(context.Background(), user.UserPrimaryKey{
 		Email: address.Address,
 	})
 	if err != nil {
 		return nil, fmt.Errorf(constants.InternalError)
 	}
-	if user == nil {
+	if u == nil {
+		// Mitigate time based attack
+		u = &user.User{
+			Password: rand.Text(),
+		}
+	}
+
+	if err := VerifyPassword(creds.Password, u.Password); err != nil {
 		return nil, fmt.Errorf(constants.WrongCredentials)
 	}
 
-	if err := VerifyPassword(creds.Password, user.Password); err != nil {
-		return nil, fmt.Errorf(constants.WrongCredentials)
-	}
-
-	return user, nil
+	return u, nil
 }
