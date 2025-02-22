@@ -20,6 +20,7 @@ type ConnectionInformation struct {
 }
 
 func CreateConnection(ctx context.Context, connInfo ConnectionInformation) error {
+	fmt.Println("db::CreateConnection")
 	databaseInstanceMutex.Lock()
 	defer databaseInstanceMutex.Unlock()
 
@@ -44,6 +45,7 @@ func GetConnection() *pgx.Conn {
 }
 
 func instanciate(ctx context.Context, connInfo ConnectionInformation) (*pgx.Conn, error) {
+	fmt.Println("db::instanciate")
 	driver, err := connect(ctx, connInfo)
 	if err != nil {
 		return nil, err
@@ -81,6 +83,7 @@ func connect(ctx context.Context, connInfo ConnectionInformation) (*pgx.Conn, er
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("db::connect")
 
 	if err := driver.Ping(ctx); err != nil {
 		return nil, err

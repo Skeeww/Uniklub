@@ -2,4 +2,6 @@ package constants
 
 type ContextKey uint
 
-const ()
+const (
+	AuthContext ContextKey = iota
+)

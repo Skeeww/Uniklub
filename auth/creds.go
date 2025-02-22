@@ -33,6 +33,7 @@ func (creds *UserPasswordCrendentials) Check() (*user.User, error) {
 	}
 	if u == nil {
 		// Mitigate time based attack
+		// FIXME: this solution does not works (~60ms with an existing user while ~15ms without)
 		u = &user.User{
 			Password: rand.Text(),
 		}

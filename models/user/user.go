@@ -34,11 +34,14 @@ type UserUpdateFields struct {
 
 func Find(ctx context.Context, pk UserPrimaryKey) (*User, error) {
 	driver := database.GetConnection()
-	row := driver.QueryRow(ctx, fmt.Sprintf("SELECT email, name, surname, password FROM %s WHERE email = $1", table), pk.Email)
+	row := driver.QueryRow(ctx, fmt.Sprintf("SELECT * FROM %s WHERE email = $1", table), pk.Email)
 
-	var user User
+	user := User{}
 	if err := row.Scan(&user.Email, &user.Name, &user.Surname, &user.Password); err != nil && err != pgx.ErrNoRows {
 		return nil, err
+	}
+	if user.Email == "" {
+		return nil, nil
 	}
 
 	return &user, nil

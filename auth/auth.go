@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"bytes"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -29,7 +30,7 @@ func (auth *JWTAuth[T]) Auth(creds T) (string, error) {
 		Subject:   user.Email,
 		ExpiresAt: auth.Expiration,
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
-	}).SignedString(auth.SigningKey)
+	}).SignedString(bytes.NewBufferString(auth.SigningKey).Bytes())
 
 	if err != nil {
 		return "", err

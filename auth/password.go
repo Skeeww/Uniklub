@@ -35,7 +35,7 @@ func VerifyPassword(input string, hash string) error {
 		return fmt.Errorf("hash string to buffer is nil")
 	}
 
-	if err := bcrypt.CompareHashAndPassword(inputBuf.Bytes(), hashBuf.Bytes()); err != nil {
+	if err := bcrypt.CompareHashAndPassword(hashBuf.Bytes(), inputBuf.Bytes()); err != nil {
 		return err
 	}
 

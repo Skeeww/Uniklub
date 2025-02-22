@@ -2,16 +2,27 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"noan.dev/uniklub/api/v1/auth"
 	"noan.dev/uniklub/api/v1/clubs"
 	"noan.dev/uniklub/api/v1/users"
+	authent "noan.dev/uniklub/auth"
+	"noan.dev/uniklub/constants"
 	"noan.dev/uniklub/database"
 	"noan.dev/uniklub/middlewares"
 )
 
 func main() {
 	ctx := context.Background()
+	ctx = context.WithValue(ctx, constants.AuthContext, &authent.JWTAuth[*authent.UserPasswordCrendentials]{
+		Issuer:        "uniklub-v1",
+		SigningMethod: jwt.SigningMethodHS512,
+		SigningKey:    "hello-world",
+		Expiration:    jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+	})
 
 	if err := database.CreateConnection(ctx, database.ConnectionInformation{
 		Username: "postgres",
@@ -48,7 +59,7 @@ func main() {
 		}
 		authRouter := v1Router.Group("/auth")
 		{
-			authRouter.POST("/")
+			authRouter.POST("/", auth.Login(ctx))
 			authRouter.GET("/me")
 			authRouter.GET("/logout")
 		}
