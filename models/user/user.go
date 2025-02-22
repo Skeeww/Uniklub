@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
-	"noan.dev/uniklub/constants"
+	"noan.dev/uniklub/database"
 )
 
 const table = "users"
@@ -33,11 +33,11 @@ type UserUpdateFields struct {
 }
 
 func Find(ctx context.Context, pk UserPrimaryKey) (*User, error) {
-	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
+	driver := database.GetConnection()
 	row := driver.QueryRow(ctx, fmt.Sprintf("SELECT email, name, surname, password FROM %s WHERE email = $1", table), pk.Email)
 
 	var user User
-	if err := row.Scan(&user.Email, &user.Name, &user.Surname, &user.Password); err != nil {
+	if err := row.Scan(&user.Email, &user.Name, &user.Surname, &user.Password); err != nil && err != pgx.ErrNoRows {
 		return nil, err
 	}
 
@@ -45,7 +45,7 @@ func Find(ctx context.Context, pk UserPrimaryKey) (*User, error) {
 }
 
 func Create(ctx context.Context, fields UserCreationFields) (*User, error) {
-	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
+	driver := database.GetConnection()
 	existingUser, _ := Find(ctx, UserPrimaryKey{
 		Email: fields.Email,
 	})
@@ -63,7 +63,7 @@ func Create(ctx context.Context, fields UserCreationFields) (*User, error) {
 }
 
 func Update(ctx context.Context, pk UserPrimaryKey, fields UserUpdateFields) (*User, error) {
-	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
+	driver := database.GetConnection()
 
 	user, err := Find(ctx, pk)
 	if err != nil {
@@ -82,7 +82,7 @@ func Update(ctx context.Context, pk UserPrimaryKey, fields UserUpdateFields) (*U
 }
 
 func Delete(ctx context.Context, pk UserPrimaryKey) error {
-	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
+	driver := database.GetConnection()
 
 	rows, err := driver.Query(ctx, fmt.Sprintf("DELETE FROM %s WHERE email = $1", table), pk.Email)
 	if err != nil {

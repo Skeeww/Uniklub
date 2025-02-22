@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5"
-	"noan.dev/uniklub/constants"
+	"noan.dev/uniklub/database"
 )
 
 const table = "clubs"
@@ -25,7 +24,7 @@ type ClubUpdateFields struct {
 }
 
 func Find(ctx context.Context, pk ClubPrimaryKey) *Club {
-	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
+	driver := database.GetConnection()
 
 	row := driver.QueryRow(ctx, fmt.Sprintf("SELECT * FROM %s WHERE id = $1", table), pk.Id)
 
@@ -39,8 +38,8 @@ func Find(ctx context.Context, pk ClubPrimaryKey) *Club {
 }
 
 func FindAll(ctx context.Context) []*Club {
+	driver := database.GetConnection()
 	clubs := make([]*Club, 0)
-	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
 
 	rows, err := driver.Query(ctx, fmt.Sprintf("SELECT id, name FROM %s", table))
 	if err != nil {
@@ -62,7 +61,7 @@ func FindAll(ctx context.Context) []*Club {
 }
 
 func Create(ctx context.Context, fields ClubCreationFields) *Club {
-	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
+	driver := database.GetConnection()
 	row := driver.QueryRow(ctx, fmt.Sprintf("INSERT INTO %s(name) VALUES ($1) RETURNING *", table), fields.Name)
 
 	var club Club
@@ -75,7 +74,7 @@ func Create(ctx context.Context, fields ClubCreationFields) *Club {
 }
 
 func Update(ctx context.Context, pk ClubPrimaryKey, fields ClubUpdateFields) *Club {
-	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
+	driver := database.GetConnection()
 	row := driver.QueryRow(ctx, fmt.Sprintf("UPDATE %s SET name = $1 WHERE id = $2 RETURNING *", table), fields.Name, pk.Id)
 
 	var club Club
@@ -88,7 +87,7 @@ func Update(ctx context.Context, pk ClubPrimaryKey, fields ClubUpdateFields) *Cl
 }
 
 func Delete(ctx context.Context, pk ClubPrimaryKey) error {
-	driver := ctx.Value(constants.DatabaseCtx).(*pgx.Conn)
+	driver := database.GetConnection()
 
 	rows, err := driver.Query(ctx, fmt.Sprintf("DELETE FROM %s WHERE id = $1", table), pk.Id)
 	if err != nil {

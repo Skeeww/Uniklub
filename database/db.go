@@ -3,9 +3,13 @@ package database
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/jackc/pgx/v5"
 )
+
+var databaseInstance *pgx.Conn = nil
+var databaseInstanceMutex *sync.Mutex = &sync.Mutex{}
 
 type ConnectionInformation struct {
 	Username string
@@ -15,7 +19,31 @@ type ConnectionInformation struct {
 	Database string
 }
 
-func Init(ctx context.Context, connInfo ConnectionInformation) (*pgx.Conn, error) {
+func CreateConnection(ctx context.Context, connInfo ConnectionInformation) error {
+	databaseInstanceMutex.Lock()
+	defer databaseInstanceMutex.Unlock()
+
+	if databaseInstance != nil {
+		return fmt.Errorf("an instance has already been created")
+	}
+
+	db, err := instanciate(ctx, connInfo)
+	if err != nil {
+		return err
+	}
+
+	databaseInstance = db
+	return nil
+}
+
+func GetConnection() *pgx.Conn {
+	databaseInstanceMutex.Lock()
+	defer databaseInstanceMutex.Unlock()
+
+	return databaseInstance
+}
+
+func instanciate(ctx context.Context, connInfo ConnectionInformation) (*pgx.Conn, error) {
 	driver, err := connect(ctx, connInfo)
 	if err != nil {
 		return nil, err

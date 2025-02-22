@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"noan.dev/uniklub/api/v1/clubs"
 	"noan.dev/uniklub/api/v1/users"
-	"noan.dev/uniklub/constants"
 	"noan.dev/uniklub/database"
 	"noan.dev/uniklub/middlewares"
 )
@@ -14,22 +13,21 @@ import (
 func main() {
 	ctx := context.Background()
 
-	driver, err := database.Init(ctx, database.ConnectionInformation{
+	if err := database.CreateConnection(ctx, database.ConnectionInformation{
 		Username: "postgres",
 		Password: "postgres",
 		Address:  "127.0.0.1",
 		Port:     5432,
 		Database: "app",
-	})
-	if err != nil {
+	}); err != nil {
 		panic(err)
 	}
+	driver := database.GetConnection()
 
 	defer driver.Close(ctx)
 
-	ctx = context.WithValue(ctx, constants.DatabaseCtx, driver)
-
 	gin.SetMode(gin.DebugMode)
+
 	r := gin.Default()
 	r.Use(middlewares.HandleSecurity(ctx))
 
@@ -47,6 +45,12 @@ func main() {
 		usersRouter := v1Router.Group("/users")
 		{
 			usersRouter.POST("/", users.Create(ctx))
+		}
+		authRouter := v1Router.Group("/auth")
+		{
+			authRouter.POST("/")
+			authRouter.GET("/me")
+			authRouter.GET("/logout")
 		}
 	}
 
