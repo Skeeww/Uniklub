@@ -6,9 +6,9 @@ import (
 	"net/mail"
 
 	"github.com/gin-gonic/gin"
-	"noan.dev/uniklub/auth"
 	"noan.dev/uniklub/constants"
 	"noan.dev/uniklub/models/user"
+	"noan.dev/uniklub/utils"
 )
 
 func Create(ctx context.Context) func(*gin.Context) {
@@ -36,7 +36,7 @@ func Create(ctx context.Context) func(*gin.Context) {
 			c.JSON(400, constants.CreateErrorMessage(constants.PasswordLengthError))
 			return
 		}
-		password, err := auth.HashPassword(request.Password)
+		password, err := utils.HashPassword(request.Password)
 		if err != nil {
 			c.JSON(400, constants.CreateErrorMessage(constants.PasswordHashError))
 			return

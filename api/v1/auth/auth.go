@@ -28,7 +28,7 @@ func Login(ctx context.Context) func(*gin.Context) {
 			return
 		}
 
-		authenticator := ctx.Value(constants.AuthContext).(auth.Authenticater[*auth.UserPasswordCrendentials])
+		authenticator := ctx.Value(constants.AuthContext).(auth.Authenticater)
 		token, err := authenticator.Auth(&auth.UserPasswordCrendentials{
 			Email:    address.Address,
 			Password: request.Password,
@@ -39,7 +39,22 @@ func Login(ctx context.Context) func(*gin.Context) {
 		}
 
 		c.JSON(200, gin.H{
-			"token": token,
+			"token": token.ToString(),
 		})
+	}
+}
+
+func Me(ctx context.Context) func(*gin.Context) {
+	return func(c *gin.Context) {
+		authenticator := ctx.Value(constants.AuthContext).(auth.Authenticater)
+		token := c.Keys[constants.TokenContext].(auth.Tokener)
+
+		u, err := authenticator.GetUser(token)
+		if err != nil {
+			c.JSON(500, constants.CreateErrorMessage(err.Error()))
+			return
+		}
+
+		c.JSON(200, u)
 	}
 }

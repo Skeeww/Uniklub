@@ -16,13 +16,14 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, constants.AuthContext, &authent.JWTAuth[*authent.UserPasswordCrendentials]{
+	authenticator := &authent.JWTAuth{
 		Issuer:        "uniklub-v1",
 		SigningMethod: jwt.SigningMethodHS512,
-		SigningKey:    "hello-world",
+		SigningKey:    []byte("hello-world"),
 		Expiration:    jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-	})
+	}
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, constants.AuthContext, authenticator)
 
 	if err := database.CreateConnection(ctx, database.ConnectionInformation{
 		Username: "postgres",
@@ -60,7 +61,7 @@ func main() {
 		authRouter := v1Router.Group("/auth")
 		{
 			authRouter.POST("/", auth.Login(ctx))
-			authRouter.GET("/me")
+			authRouter.GET("/me", middlewares.HandleJWTAuthToken(ctx), auth.Me(ctx))
 			authRouter.GET("/logout")
 		}
 	}

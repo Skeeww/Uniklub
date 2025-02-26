@@ -1,22 +1,21 @@
-package auth
+package utils
 
 import (
-	"bytes"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 func HashPassword(input string) (string, error) {
-	buf := bytes.NewBufferString(input)
+	buf := []byte(input)
 	if buf == nil {
 		return "", fmt.Errorf("input string to buffer is nil")
 	}
-	if buf.Len() > 72 {
+	if len(buf) > 72 {
 		return "", fmt.Errorf("input string is longer than 72 bytes")
 	}
 
-	hash, err := bcrypt.GenerateFromPassword(buf.Bytes(), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword(buf, bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
@@ -25,17 +24,17 @@ func HashPassword(input string) (string, error) {
 }
 
 func VerifyPassword(input string, hash string) error {
-	inputBuf := bytes.NewBufferString(input)
+	inputBuf := []byte(input)
 	if inputBuf == nil {
 		return fmt.Errorf("input string to buffer is nil")
 	}
 
-	hashBuf := bytes.NewBufferString(hash)
+	hashBuf := []byte(hash)
 	if hashBuf == nil {
 		return fmt.Errorf("hash string to buffer is nil")
 	}
 
-	if err := bcrypt.CompareHashAndPassword(hashBuf.Bytes(), inputBuf.Bytes()); err != nil {
+	if err := bcrypt.CompareHashAndPassword(hashBuf, inputBuf); err != nil {
 		return err
 	}
 
