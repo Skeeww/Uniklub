@@ -20,7 +20,6 @@ type ConnectionInformation struct {
 }
 
 func CreateConnection(ctx context.Context, connInfo ConnectionInformation) error {
-	fmt.Println("db::CreateConnection")
 	databaseInstanceMutex.Lock()
 	defer databaseInstanceMutex.Unlock()
 
@@ -28,12 +27,12 @@ func CreateConnection(ctx context.Context, connInfo ConnectionInformation) error
 		return fmt.Errorf("an instance has already been created")
 	}
 
-	db, err := instanciate(ctx, connInfo)
+	driver, err := connect(ctx, connInfo)
 	if err != nil {
 		return err
 	}
 
-	databaseInstance = db
+	databaseInstance = driver
 	return nil
 }
 
@@ -44,46 +43,11 @@ func GetConnection() *pgx.Conn {
 	return databaseInstance
 }
 
-func instanciate(ctx context.Context, connInfo ConnectionInformation) (*pgx.Conn, error) {
-	fmt.Println("db::instanciate")
-	driver, err := connect(ctx, connInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, item := range sqlCreateEnums {
-		fmt.Println("creating type", item.name)
-		_, err := driver.Exec(ctx, item.query)
-		if err != nil {
-			fmt.Println("warn:", err.Error())
-		}
-	}
-
-	for _, item := range sqlCreateTables {
-		fmt.Println("creating table", item.name)
-		_, err := driver.Exec(ctx, item.query)
-		if err != nil {
-			fmt.Println("warn:", err.Error())
-		}
-	}
-
-	for _, item := range sqlCreateIndexes {
-		fmt.Println("creating index", item.name)
-		_, err := driver.Exec(ctx, item.query)
-		if err != nil {
-			fmt.Println("warn:", err.Error())
-		}
-	}
-
-	return driver, nil
-}
-
 func connect(ctx context.Context, connInfo ConnectionInformation) (*pgx.Conn, error) {
 	driver, err := pgx.Connect(ctx, fmt.Sprintf("postgres://%s:%s@%s:%d/%s", connInfo.Username, connInfo.Password, connInfo.Address, connInfo.Port, connInfo.Database))
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("db::connect")
 
 	if err := driver.Ping(ctx); err != nil {
 		return nil, err
