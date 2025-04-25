@@ -22,9 +22,10 @@ func main() {
 
 	gin.SetMode(gin.DebugMode)
 
-	r := SetupRouter(ctx)
 	driver := SetupDatabase(ctx)
 	defer driver.Close(ctx)
+
+	r := SetupRouter(ctx)
 
 	if err := r.Run(); err != nil {
 		panic(err)
